@@ -14,11 +14,14 @@ import java.util.Map;
 import com.mysql.jdbc.PreparedStatement;
 
 public class AddressBookDBService {
+	
 	private static AddressBookDBService addressBookDBService;
 	private Connection connection = null;
 	private PreparedStatement preparedStatement = null;
+	
 	private AddressBookDBService() {
 	}
+	
 	public static AddressBookDBService getInstance() {
 		if(addressBookDBService == null) {
 			addressBookDBService = new AddressBookDBService();
@@ -44,6 +47,7 @@ public class AddressBookDBService {
 		}
 		return connection;
 	}
+	
 	//cache prepared statement
 	private void getPreparedStatement() throws SQLException, DatabaseException {
 		this.getConnection();
@@ -52,11 +56,83 @@ public class AddressBookDBService {
 		preparedStatement = (PreparedStatement) connection.prepareStatement(sql);
 		}
 	}
+	
 	//retrieval query
 	public List<Contact> readData() throws DatabaseException {
 		String sql = "select * from contacts inner join address using(contactid) inner join bookmap using(contactid) inner join addressbook using(bookid) ; " ;
 		return this.getContactData(sql);
 	}
+	
+	//Add contact ensuring transaction is completed or aborted
+	
+	public Contact addContact(String firstName, String lastName, String city, String state, int zip, int bookid, String phonenumber, String email) throws SQLException, DatabaseException {
+		int contactId = -1;
+		Connection connection = null;
+		Contact contact = null;
+		try {
+			connection = this.getConnection();
+			connection.setAutoCommit(false);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		try (Statement statement = connection.createStatement()) {
+			String sql = String.format("insert into contacts(firstname, lastname, phonenumber, email, date_added) "
+					+ "VALUES ('%s','%s', %d,'%s') ;", firstName, lastName, Long.parseLong(phonenumber), email, Date.valueOf(LocalDate.now()));
+			int rowAffected = statement.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
+			if (rowAffected == 1) {
+				ResultSet resultSet = statement.getGeneratedKeys();
+				if (resultSet.next()) {
+					contactId = resultSet.getInt("contactId");
+				}
+			}
+		} catch (SQLException exception1) {
+			try {
+				connection.rollback();
+			} catch (SQLException exception) {
+				exception.printStackTrace();
+			}
+		}
+		try(Statement statement = connection.createStatement()) {
+			String sql = String.format(
+					"Insert into address "
+							+ "values (%d,'%s','%s', %d) ; ",
+							contactId, city, state, zip);
+			statement.executeUpdate(sql);
+		} catch (SQLException e) {
+			try {
+				connection.rollback();
+			} catch (SQLException exception) {
+				exception.printStackTrace();
+			}
+		}
+		try(Statement statement = connection.createStatement()) {
+			String sql = String.format(
+					"INSERT INTO bookmap "
+							+ "VALUES (%d, %d) ;",
+							contactId, bookid);
+			int rowAffected = statement.executeUpdate(sql);
+			if(rowAffected == 1) {
+				contact = new Contact(firstName, lastName, city, state, zip, Long.parseLong(phonenumber), email);
+			}
+		} catch (SQLException e) {
+			try {
+				connection.rollback();
+			} catch (SQLException exception) {
+				exception.printStackTrace();
+			}
+		}
+		try {
+			connection.commit();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			if (connection != null) {
+				connection.close();
+			}
+		}
+		return contact;
+	}
+	
 	/**
 	 * Function retrieves the contact details and returns a list of contacts
 	 * @param sql
@@ -74,6 +150,7 @@ public class AddressBookDBService {
 		}
 		return contactList;		
 	}
+	
 	public List<Contact> getContactData(String firstName, String lastName) throws DatabaseException{
 		try {
 			getPreparedStatement();
@@ -85,6 +162,7 @@ public class AddressBookDBService {
 			throw new DatabaseException("Unable to get contact data");
 		}
 	}
+	
 	private List<Contact> getContactData(ResultSet resultSet) throws DatabaseException {
 		List<Contact> contactList = new ArrayList<Contact>();
 		try {
@@ -104,6 +182,16 @@ public class AddressBookDBService {
 		}
 		return contactList;
 	}
+	
+	/**
+	 * Usecase 17:
+	 * @param firstName
+	 * @param lastName
+	 * @param phone
+	 * @return
+	 * @throws DatabaseException
+	 * @throws SQLException
+	 */	
 	public int updateContactData(String firstName, String lastName, long phone) throws DatabaseException, SQLException {
 		connection = this.getConnection();
 		String sql = "Update contacts inner join address using(contactId) set phonenumber = ? where firstname = ? and lastname = ? ; " ; 
@@ -114,11 +202,24 @@ public class AddressBookDBService {
 		return prepareStatement.executeUpdate();
 	}
 	
+	/**
+	 * Usecase 18:
+	 * @param start
+	 * @param end
+	 * @return
+	 * @throws DatabaseException
+	 */
 	public List<Contact> readDataForGivenDateRange(LocalDate start, LocalDate end) throws DatabaseException{
 		String sql = String.format("Select * from contacts inner join address using(contactid) where date_added between '%s' and '%s' ;", Date.valueOf(start), Date.valueOf(end));
 	    return getContactData(sql);
 	}
 	
+	/**
+	 * Usecase 19:
+	 * @param function
+	 * @return
+	 * @throws DatabaseException
+	 */
 	public Map<String, Integer> getContactsByAttribute(String function) throws  DatabaseException{
 		Map<String, Integer> contactMap = new HashMap<>();
 		String sql = String.format("select %s,count(*) from contacts join address using(contactid) group by %s;",function, function) ;
