@@ -137,6 +137,14 @@ public class AddressBookService {
 		return addressBookDBService.readDataForGivenDateRange(start, end);
 	}
 	
+	public Map<String, Integer> getContactByCity() throws DatabaseException{
+		return addressBookDBService.getContactsByAttribute("city");
+	}
+	
+	public Map<String, Integer> getContactByState() throws DatabaseException{
+		return addressBookDBService.getContactsByAttribute("state");
+	}
+	
 	public boolean checkContactDataSync(String firstName, String lastName) throws DatabaseException, SQLException {
 		List<Contact> contactList = addressBookDBService.getContactData(firstName, lastName);
 		return contactList.get(0).equals(getContact(firstName, lastName));

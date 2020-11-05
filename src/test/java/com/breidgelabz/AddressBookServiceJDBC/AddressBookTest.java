@@ -1,6 +1,7 @@
 package com.breidgelabz.AddressBookServiceJDBC;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -36,5 +37,17 @@ public class AddressBookTest {
 		LocalDate end = LocalDate.now();
 		List<Contact> contactList = addressBookService.getContactByDate(start, end);
 		assertEquals(3, contactList.size());
+	}
+	
+	@Test
+	public void givenContacts_WhenRetrievedByCity_ShouldMatchCount() throws DatabaseException {
+		AddressBookService addressBookService = new AddressBookService();
+		assertTrue(addressBookService.getContactByCity().get("Kandivali").equals(1));
+	}
+	
+	@Test
+	public void givenContacts_WhenRetrievedByState_ShouldMatchCount() throws DatabaseException {
+		AddressBookService addressBookService = new AddressBookService();
+		assertTrue(addressBookService.getContactByState().get("Maharashtra").equals(2));
 	}
 }
