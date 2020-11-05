@@ -7,10 +7,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import com.mysql.jdbc.PreparedStatement;
 
 public class AddressBookDBService {
-	
 	private static AddressBookDBService addressBookDBService;
+	private Connection connection = null;
+	private PreparedStatement preparedStatement = null;
 	private AddressBookDBService() {
 	}
 	public static AddressBookDBService getInstance() {
@@ -29,7 +31,6 @@ public class AddressBookDBService {
 		String jdbcurl = "jdbc:mysql://localhost:3306/addressbook_service?useSSL=false";
 		String userName = "root";
 		String password = "Prema@44";
-		Connection connection;
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
 			connection = DriverManager.getConnection(jdbcurl, userName, password);
@@ -39,12 +40,19 @@ public class AddressBookDBService {
 		}
 		return connection;
 	}
+	//cache prepared statement
+	private void getPreparedStatement() throws SQLException, DatabaseException {
+		this.getConnection();
+		if(preparedStatement == null) {
+			String sql = "Select * from contacts inner join address using(contactId) where firstname = ? and lastname = ?;";
+		preparedStatement = (PreparedStatement) connection.prepareStatement(sql);
+		}
+	}
 	//retrieval query
 	public List<Contact> readData() throws DatabaseException {
 		String sql = "select * from contacts inner join address using(contactid) inner join bookmap using(contactid) inner join addressbook using(bookid) ; " ;
 		return this.getContactData(sql);
 	}
-	
 	/**
 	 * Function retrieves the contact details and returns a list of contacts
 	 * @param sql
@@ -56,6 +64,26 @@ public class AddressBookDBService {
 		try (Connection connection = this.getConnection()) {
 			Statement statement = connection.createStatement();
 			ResultSet resultSet = statement.executeQuery(sql);
+			contactList = getContactData(resultSet);
+		} catch (SQLException e) {
+			throw new DatabaseException("Unable to get Contacts");
+		}
+		return contactList;		
+	}
+	public List<Contact> getContactData(String firstName, String lastName) throws DatabaseException{
+		try {
+			getPreparedStatement();
+			preparedStatement.setString(1,  firstName);
+			preparedStatement.setString(2,  lastName);
+			return getContactData(preparedStatement.executeQuery());
+		}
+		catch(SQLException exception) {
+			throw new DatabaseException("Unable to get contact data");
+		}
+	}
+	private List<Contact> getContactData(ResultSet resultSet) throws DatabaseException {
+		List<Contact> contactList = new ArrayList<Contact>();
+		try {
 			while (resultSet.next()) {
 				String firstname = resultSet.getString("firstname");
 				String lastname = resultSet.getString("lastname");
@@ -66,9 +94,19 @@ public class AddressBookDBService {
 				String email = resultSet.getString("email");
 				contactList.add(new Contact(firstname, lastname, city, state, zip, phoneNumber,email));
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
 		}
-		return contactList;			
+		catch(SQLException exception){
+			throw new DatabaseException("Unable to get contacts");
+		}
+		return contactList;
+	}
+	public int updateContactData(String firstName, String lastName, long phone) throws DatabaseException, SQLException {
+		connection = this.getConnection();
+		String sql = "Update contacts inner join address using(contactId) set phonenumber = ? where firstname = ? and lastname = ? ; " ; 
+		PreparedStatement prepareStatement = (PreparedStatement) connection.prepareStatement(sql);
+		prepareStatement.setLong(1, phone);
+		prepareStatement.setString(2, firstName);
+		prepareStatement.setString(3, lastName);
+		return prepareStatement.executeUpdate();
 	}
 }

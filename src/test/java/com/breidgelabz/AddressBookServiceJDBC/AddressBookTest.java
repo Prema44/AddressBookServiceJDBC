@@ -8,11 +8,11 @@ import com.bridgelabz.AddressBookServiceJDBC.Contact;
 import com.bridgelabz.AddressBookServiceJDBC.DatabaseException;
 
 public class AddressBookTest {
+	
 	@Test
 	public void givenContactDataInDB_WhenRetrieved_ShouldMatchContactCount() throws DatabaseException {
 		AddressBookService addressBookService = new AddressBookService();
 		List<Contact> contactData = addressBookService.readContactDBData();
 		assertEquals(4, contactData.size());
 	}
-
 }

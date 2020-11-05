@@ -1,6 +1,16 @@
 package com.bridgelabz.AddressBookServiceJDBC;
 
 public class Contact {
+	
+	private String firstName;
+	private String lastName;
+	private String address;
+	private String city;
+	private String state;
+	private int zip;
+	private long phoneNumber;
+	private String email;
+	
 	public Contact(String firstName, String lastName, String address, String city, String state, int zip,
 			long phoneNumber, String email) {
 		this(firstName, lastName, city, state, zip, phoneNumber, email);
@@ -16,14 +26,7 @@ public class Contact {
 		this.phoneNumber = phoneNumber;
 		this.email = email;
 	}
-	private String firstName;
-	private String lastName;
-	private String address;
-	private String city;
-	private String state;
-	private int zip;
-	private long phoneNumber;
-	private String email;
+
 
 	public String getFirstName() {
 		return firstName;
