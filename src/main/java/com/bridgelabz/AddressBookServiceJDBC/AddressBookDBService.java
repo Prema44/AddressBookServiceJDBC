@@ -1,10 +1,12 @@
 package com.bridgelabz.AddressBookServiceJDBC;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import com.mysql.jdbc.PreparedStatement;
@@ -108,5 +110,10 @@ public class AddressBookDBService {
 		prepareStatement.setString(2, firstName);
 		prepareStatement.setString(3, lastName);
 		return prepareStatement.executeUpdate();
+	}
+	
+	public List<Contact> readDataForGivenDateRange(LocalDate start, LocalDate end) throws DatabaseException{
+		String sql = String.format("Select * from contacts inner join address using(contactid) where date_added between '%s' and '%s' ;", Date.valueOf(start), Date.valueOf(end));
+	    return getContactData(sql);
 	}
 }

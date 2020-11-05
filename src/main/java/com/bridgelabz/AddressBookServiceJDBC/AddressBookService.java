@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
 
 public class AddressBookService {
+	
 	private List<Contact> contactList = new ArrayList<Contact>();
 	private AddressBookDBService addressBookDBService;
 	
@@ -38,6 +40,7 @@ public class AddressBookService {
 		}
 		System.out.println("Data Written Successfully");
 	}
+	
 	public static void writeContactAsCSV(Contact contact) 
 	{ 
 		Path path = Paths.get("addressBook.csv");
@@ -54,6 +57,7 @@ public class AddressBookService {
 			exception.printStackTrace(); 
 		} 
 	} 
+	
 	public static void readAddressBookCSV() 
 	{ 
 	    try {  
@@ -72,6 +76,7 @@ public class AddressBookService {
 	        exception.printStackTrace(); 
 	    } 
 	} 
+	
 	public static void writeAsJson(Contact contact) {
 		Gson gson = new Gson();
 		String json = gson.toJson(contact);
@@ -105,6 +110,7 @@ public class AddressBookService {
 			exception.printStackTrace();
 		}
 	}
+	
 	public List<Contact> readContactDBData() throws DatabaseException {
 			this.contactList = addressBookDBService.readData();
 		return this.contactList;
@@ -120,14 +126,21 @@ public class AddressBookService {
 			contact.setPhoneNumber(phone);
 		}
 	}
+	
 	private Contact getContact(String firstName, String lastName) {
 		Contact contact = this.contactList.stream().filter(contactData -> contactData.getFirstName().equals(firstName) && contactData.getLastName().equals(lastName))
 				.findFirst().orElse(null);
 		return contact;
 	}
+	
+	public List<Contact> getContactByDate(LocalDate start, LocalDate end) throws DatabaseException {
+		return addressBookDBService.readDataForGivenDateRange(start, end);
+	}
+	
 	public boolean checkContactDataSync(String firstName, String lastName) throws DatabaseException, SQLException {
 		List<Contact> contactList = addressBookDBService.getContactData(firstName, lastName);
 		return contactList.get(0).equals(getContact(firstName, lastName));
 
 	}
+	
 }
