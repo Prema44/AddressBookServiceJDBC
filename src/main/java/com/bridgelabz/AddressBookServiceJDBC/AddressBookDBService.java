@@ -65,7 +65,7 @@ public class AddressBookDBService {
 	
 	//Add contact ensuring transaction is completed or aborted
 	
-	public Contact addContact(String firstName, String lastName, String city, String state, int zip, int bookid, String phonenumber, String email) throws SQLException, DatabaseException {
+	public Contact addContact(String firstName, String lastName, String city, String state, int zip, String phonenumber, String email, int type) throws SQLException, DatabaseException {
 		int contactId = -1;
 		Connection connection = null;
 		Contact contact = null;
@@ -109,7 +109,7 @@ public class AddressBookDBService {
 			String sql = String.format(
 					"INSERT INTO bookmap "
 							+ "VALUES (%d, %d) ;",
-							contactId, bookid);
+							contactId, type);
 			int rowAffected = statement.executeUpdate(sql);
 			if(rowAffected == 1) {
 				contact = new Contact(firstName, lastName, city, state, zip, Long.parseLong(phonenumber), email);

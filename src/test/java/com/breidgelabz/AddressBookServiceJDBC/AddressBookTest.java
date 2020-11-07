@@ -4,7 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.SQLException;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import com.bridgelabz.AddressBookServiceJDBC.AddressBookService;
@@ -54,8 +57,22 @@ public class AddressBookTest {
 	@Test
 	public void givenContact_WhenAdded_ShouldMatchCount() throws DatabaseException, SQLException {
 		AddressBookService addressBookService = new AddressBookService();
-		addressBookService.addContact("Sarthak", "Bagadi", "Bandra", "Karnataka", 421209, 1, "9874563214", "sarthak@gmail.com");
+		addressBookService.addContact("Sarthak", "Bagadi", "Bandra", "Karnataka", 421209, "9874563214", "sarthak@gmail.com", 2);
 		List<Contact> contactList = addressBookService.readContactDBData();
 		assertEquals(contactList.size(), 4);
+	}
+	
+	@Test
+	public void givenMultipleContacts_WhenAddedToDB_ShouldMatchContactEntries() throws DatabaseException {
+		Contact[] contactArray = { new Contact("Locky","Feguson", "Malad","Maharashtra",412055, 2324235324L,"abcd@gmail.com",2),
+				new Contact("Locky","Feguson", "Malad","Maharashtra",412055, 2324235324L,"abcd@gmail.com",1)};
+		AddressBookService addressBookService = new AddressBookService();
+		addressBookService.readContactDBData();
+		Instant start = Instant.now();
+		addressBookService.addContactToDB(Arrays.asList(contactArray));
+		Instant threadEnd = Instant.now();
+		System.out.println("Duration with Thread: " + Duration.between(start, threadEnd));
+		long result = addressBookService.readContactDBData().size();
+		assertEquals(7, result);
 	}
 }

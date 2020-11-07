@@ -129,8 +129,29 @@ public class AddressBookService {
 	 * @throws DatabaseException
 	 * @throws SQLException
 	 */	
-	public void addContact(String firstName, String lastName, String city, String state, int zip, int bookid, String phonenumber, String email) throws DatabaseException, SQLException {
-		addressBookDBService.addContact(firstName, lastName, city, state, zip, bookid, phonenumber, email);
+	public void addContact(String firstName, String lastName, String city, String state, int zip, String phonenumber, String email, int type) throws DatabaseException, SQLException {
+		addressBookDBService.addContact(firstName, lastName, city, state, zip, phonenumber, email, type);
+	}
+	public void addContactToDB(List<Contact> contactList) {
+		contactList.forEach(contact -> {
+			Runnable task = () -> {
+				System.out.println("Contact Being Added: " + Thread.currentThread().getName());
+				try {
+					this.addContact(contact.firstName, contact.lastName, contact.city,
+							contact.state, contact.zip, String.valueOf(contact.phoneNumber), contact.email, contact.type);
+				} catch (SQLException | DatabaseException e) {
+					e.printStackTrace();
+				}
+				System.out.println("Contact Added: " + Thread.currentThread().getName());
+			};
+			Thread thread = new Thread(task, contact.firstName);
+			thread.start();
+			try {
+				thread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		});
 	}
 	
 	/**
