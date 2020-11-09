@@ -1,18 +1,21 @@
 package com.breidgelabz.AddressBookServiceJDBC;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 import com.bridgelabz.AddressBookServiceJDBC.AddressBookService;
 import com.bridgelabz.AddressBookServiceJDBC.Contact;
 import com.bridgelabz.AddressBookServiceJDBC.DatabaseException;
+import com.google.gson.Gson;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
 
 public class AddressBookTest {
 	
@@ -64,8 +67,8 @@ public class AddressBookTest {
 	
 	@Test
 	public void givenMultipleContacts_WhenAddedToDB_ShouldMatchContactEntries() throws DatabaseException {
-		Contact[] contactArray = { new Contact("Locky","Feguson", "Malad","Maharashtra",412055, 2324235324L,"abcd@gmail.com",2),
-				new Contact("Locky","Feguson", "Malad","Maharashtra",412055, 2324235324L,"abcd@gmail.com",1)};
+		Contact[] contactArray = { new Contact("Lasith", "Malinga", "Malad", "Maharashtra" ,412055, 2324235324L,"abcd@gmail.com",2),
+				new Contact("Rohit", "Sharma", "Malad", "Maharashtra", 412055, 2324235324L, "abcd@gmail.com", 1)};
 		AddressBookService addressBookService = new AddressBookService();
 		addressBookService.readContactDBData();
 		Instant start = Instant.now();
@@ -75,4 +78,5 @@ public class AddressBookTest {
 		long result = addressBookService.readContactDBData().size();
 		assertEquals(7, result);
 	}
+	
 }

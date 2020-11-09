@@ -27,6 +27,11 @@ public class AddressBookService {
 	public AddressBookService() {
 		addressBookDBService = AddressBookDBService.getInstance();
 	}
+	
+	public AddressBookService(List<Contact> contactList){
+		this();
+		this.contactList = contactList;
+	}
 	public static void writeAddressBook(Map<String, AddressBook> map) {
 		StringBuffer buffer = new StringBuffer("");
 		for(String city : map.keySet()) {
@@ -225,6 +230,10 @@ public class AddressBookService {
 		List<Contact> contactList = addressBookDBService.getContactData(firstName, lastName);
 		return contactList.get(0).equals(getContact(firstName, lastName));
 
+	}
+	
+	public int countEntries() {
+		return contactList.size();
 	}
 	
 }

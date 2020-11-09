@@ -1,5 +1,7 @@
 package com.bridgelabz.AddressBookServiceJDBC;
 
+import java.time.LocalDate;
+
 public class Contact {
 	
 	public String firstName;
@@ -11,6 +13,7 @@ public class Contact {
 	public long phoneNumber;
 	public String email;
 	public int type;
+	private LocalDate dateAdded;
 	
 	public Contact(String firstName, String lastName, String city, String state, int zip,
 			long phoneNumber, String email) {
@@ -33,6 +36,12 @@ public class Contact {
 			long phoneNumber, String email) {
 		this(firstName, lastName, city, state, zip, phoneNumber, email);
 		this.address = address;
+	}
+	
+	public Contact(String firstName, String lastName, String address, String city, String state, int zip, long phoneNum,
+			String email, LocalDate dateAdded) {
+		this(firstName, lastName, address, city, state, zip, phoneNum, email);
+		this.dateAdded = dateAdded;
 	}
 
 	public String getFirstName() {
