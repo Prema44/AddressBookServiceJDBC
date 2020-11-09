@@ -1,13 +1,15 @@
 package com.breidgelabz.AddressBookServiceJDBC;
 
 import static org.junit.Assert.assertEquals;
-import java.time.LocalDate;
+import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import org.junit.Before;
 import org.junit.jupiter.api.Test;
 import com.bridgelabz.AddressBookServiceJDBC.AddressBookService;
 import com.bridgelabz.AddressBookServiceJDBC.Contact;
+import com.bridgelabz.AddressBookServiceJDBC.DatabaseException;
 import com.google.gson.Gson;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
@@ -16,65 +18,49 @@ import io.restassured.specification.RequestSpecification;
 class FakeRESTAPIJsonServerTest {
 
 	@Before
-	public void setUp() {
+	public void setup() {
 		RestAssured.baseURI = "http://localhost";
 		RestAssured.port = 3000;
 	}
-
-	/**
-	 * sending get request and retrieving all data from JSON server
-	 * 
-	 * @return
-	 */
 	private Contact[] getContactList() {
-		Response response = RestAssured.get("/contacts");
-		System.out.println("Contact entries in JSONServer:\n" + response.asString());
-		String responseBody = response.getBody().asString();
-		System.out.println("Response Body is =>  " + responseBody);
-		Contact[] arrayOfContact = new Gson().fromJson(response.asString(), Contact[].class);
+		Response response = RestAssured.get("/contact");
+		System.out.println("Contact entries in JSONServer:\n"+response.asString());
+		Contact[] arrayOfContact = new Gson().fromJson(response.asString(),Contact[].class);
 		return arrayOfContact;
 	}
-
 	@Test
-	public void givenContactDataInJSONServer_WhenRetrieved_ShouldMatchTheCount() {
+	public void givenConatactDataInJSONServer_WhenRetrieved_ShouldMatchTheCount() {
 		Contact[] arrayOfContact = getContactList();
-		AddressBookService addressBookFileService = new AddressBookService(Arrays.asList(arrayOfContact));
-		long entries = addressBookFileService.countEntries();
-		assertEquals(15, entries);
+		AddressBookService addressBookService = new AddressBookService(Arrays.asList(arrayOfContact));
+		long entries = addressBookService.getCount();
+		assertEquals(1,entries);
+
 	}
 	
-	/**
-	 * adds new contacts to JSON server and returns response
-	 * 
-	 * @param newContacts
-	 * @return
-	 */
 	private Response addContactToJsonServer(Contact contact) {
-		String json = new Gson().toJson(contact);
+		String contactJson = new Gson().toJson(contact);
 		RequestSpecification request = RestAssured.given();
 		request.header("Content-Type", "application/json");
-		request.body(json);
-		return request.post("/contacts");
+		request.body(contactJson);
+		return request.post("/contact");
 	}
 
 	@Test
 	public void givenMultipleNewContacts_WhenAdded_ShouldMatch201ResponseAndCount() {
-		List<Contact> newContacts = Arrays.asList(
-				new Contact("Sarthak", "Bagadi", "Karad", "Satara", "Maharashtra", 525252, 0000000000, "joeb@gmail.com",
-						LocalDate.now()),
-				new Contact("Samiksha", "Raut", "Panchgani", "Sangli", "Maharashtra", 525253, 0000000000,
-						"saurabhr@gmail.com", LocalDate.now()),
-				new Contact("Kamala", "Harris", "Vita", "Sangli", "Maharashtra", 858585, 0000000000, "kamalah@gmail.com",
-						LocalDate.now()));
-		AddressBookService addressBookFileService = new AddressBookService(Arrays.asList(getContactList()));
-		newContacts.forEach(contact -> {
+		Contact[] arrayOfContact = getContactList();
+		AddressBookService addService = new AddressBookService(Arrays.asList(arrayOfContact));
+		Contact[] contacts = {new Contact("Hardik","Pandya","Ahmedabad", "Maharashtra", 444001, 8850273350L,"abcd@gmail.com",2),
+				new Contact("Sachin","Tendulkar","Mumbai", "Maharashtra", 444001, 7887483853L,"abcd@gmail.com",2)};
+		List<Contact> contactList = Arrays.asList(contacts);
+		contactList.forEach(contact -> {
 			Runnable task = () -> {
 				Response response = addContactToJsonServer(contact);
 				int statusCode = response.getStatusCode();
 				assertEquals(201, statusCode);
-				addressBookFileService.addToApplicationMemory(contact);
+				Contact newContact = new Gson().fromJson(response.asString(), Contact.class);
+				addService.addContact(newContact);
 			};
-			Thread thread = new Thread(task, contact.getFirstName());
+			Thread thread = new Thread(task, contact.firstName);
 			thread.start();
 			try {
 				thread.join();
@@ -82,8 +68,36 @@ class FakeRESTAPIJsonServerTest {
 				e.printStackTrace();
 			}
 		});
-		long entries = addressBookFileService.countEntries();
-		assertEquals(18, entries);
-	}	
-
+		int count = addService.getCount();
+		assertEquals(3, count);
+	}
+	
+	@Test 
+	public void givenNewPhoneForContact_WhenUpdated_ShouldMatch200Request() throws DatabaseException, SQLException {
+		Contact[] arrayOfContact = getContactList();
+		AddressBookService addService = new AddressBookService(Arrays.asList(arrayOfContact));
+		addService.updateContactData("Sachin", "Tendulkar", 7887483853L);
+		Contact contact = addService.getContact("Sachin", "Tendulkar");
+		String contactJson = new Gson().toJson(contact);
+		RequestSpecification request = RestAssured.given();
+		request.header("Content-Type","application/json");
+		request.body(contactJson);
+		Response response = request.put("/contact/"+contact.id);
+		int statusCode = response.getStatusCode();
+		assertEquals(200,statusCode);			
+	}
+	
+	@Test 
+	public void givenContactToDelete_WhenDeleted_ShouldMatch200ResponseAndCount() throws DatabaseException, SQLException {
+		Contact[] arrayOfContact = getContactList();
+		AddressBookService addService = new AddressBookService(new LinkedList<Contact>(Arrays.asList(arrayOfContact)));
+		Contact contact = addService.getContact("Sachin", "Tendulkar");
+		RequestSpecification request = RestAssured.given();
+		request.header("Content-Type","application/json");
+		Response response = request.delete("/contact/"+contact.id);
+		int statusCode = response.getStatusCode();
+		assertEquals(200,statusCode);
+		addService.deleteContact(contact.firstName, contact.lastName);
+		assertEquals(2,getContactList().length);
+	}
 }

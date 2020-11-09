@@ -14,6 +14,7 @@ public class Contact {
 	public String email;
 	public int type;
 	private LocalDate dateAdded;
+	public int id;
 	
 	public Contact(String firstName, String lastName, String city, String state, int zip,
 			long phoneNumber, String email) {
@@ -42,6 +43,13 @@ public class Contact {
 			String email, LocalDate dateAdded) {
 		this(firstName, lastName, address, city, state, zip, phoneNum, email);
 		this.dateAdded = dateAdded;
+	}
+	
+	public Contact(int id, String firstName, String lastName, String city, String state, int zip,
+			long phoneNumber, String email, int type) {
+		this(firstName, lastName, city, state, zip, phoneNumber, email);
+		this.type = type;
+		this.id = id;
 	}
 
 	public String getFirstName() {
