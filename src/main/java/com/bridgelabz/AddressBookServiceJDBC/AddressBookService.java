@@ -232,8 +232,22 @@ public class AddressBookService {
 
 	}
 	
+	/**
+	 * returns size of application memory
+	 * 
+	 * @return
+	 */
 	public int countEntries() {
 		return contactList.size();
+	}
+	
+	/**
+	 * adds new contacts to application memory
+	 * 
+	 * @param newContacts
+	 */
+	public void addToApplicationMemory(Contact contact) {
+		contactList.add(contact);
 	}
 	
 }
